@@ -24,14 +24,14 @@ var fs = require('fs');
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
 
-const fetchValidators = async (filePath) => {
+const fetchValidators = async (filePath, era) => {
     const wsProvider = new WsProvider("wss://rpc.polkadot.io");
   
     const api = await ApiPromise.create({
       provider: wsProvider,
     });
 
-    const validatorPrefs = await api.query.staking.erasValidatorPrefs.entries(277);
+    const validatorPrefs = await api.query.staking.erasValidatorPrefs.entries(era);
     
     const validators = {};
     for (const pref of validatorPrefs) {
@@ -110,10 +110,12 @@ const calcCommission = async (file, address) => {
 };
 
 yargs(hideBin(process.argv))
-    .command("fetch-validators [file]", "Fetch validators from remote RPC endpoint, and write it to file.", (yargs) => {
-        yargs.positional("file", { describe: "File to write to" })
+    .command("fetch-validators [file] [era]", "Fetch validators from remote RPC endpoint, and write it to file.", (yargs) => {
+        yargs
+            .positional("file", { describe: "File to write to" })
+            .positional("era", { describe: "Era number" })
     }, async (argv) => {
-        await fetchValidators(argv.file);
+        await fetchValidators(argv.file, parseInt(argv.era));
         process.exit(0);
     })
     .command("to-csv [source] [target]", "Turn the result of fetched validator data to csv.", (yargs) => {
